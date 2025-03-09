@@ -1,4 +1,4 @@
-import { Page } from 'playwright';
+import { ElementHandle, Page } from 'playwright';
 import { Log } from 'crawlee';
 
 /**
@@ -41,7 +41,7 @@ export interface FilterConfig {
 export interface FilterElement {
   id: string;
   type: FilterType;
-  element: any; // Playwright element
+  element: ElementHandle; // Playwright element
   selector: string;
   isSingleSelect: boolean;
   currentValue?: string | string[] | null;
@@ -95,7 +95,7 @@ export async function findFilterElements(page: Page, log: Log): Promise<FilterEl
       for (const element of elements) {
         // Extract ID from element
         const id = await element.getAttribute('id') || '';
-        const filterType = id ? FILTER_ID_TO_TYPE[id] : null;
+        const filterType = id ? (FILTER_ID_TO_TYPE as Record<string, FilterType>)[id] : null;
         
         if (!filterType && selector.includes('industry')) {
           // Special case for industry which might not have an ID
@@ -213,7 +213,7 @@ export async function applyFilters(
         continue;
       }
       
-      log.info(`Applying filter for ${filter.type} with value:`, filterValue);
+      log.info(`Applying filter for ${filter.type} with value:`, {filterValue});
       
       // Click on the filter to open dropdown
       await filter.element.click();

@@ -1,5 +1,5 @@
 import { jest } from '@jest/globals';
-import GeminiService from './gemini-api';
+import GeminiService from './gemini-api.js';
 import { GoogleGenerativeAI, GenerateContentResponse } from '@google/generative-ai';
 
 // Mock the GoogleGenerativeAI module

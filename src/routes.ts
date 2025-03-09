@@ -7,7 +7,7 @@ import {
     submitLoginForm,
     delay
 } from './steps.js';
-import { handleCaptcha, handleEmailCodeVerification, handleEmailVerification, scrollAndCollectData } from './steps/index.js';
+import { handleCaptcha, handleEmailCodeVerification, scrollAndCollectData } from './steps/index.js';
 import { config } from './config.js';
 import { checkApiResponsesFolderExistence, isLoggedIn, setupRequestInterception } from './helpers/index.js';
 import { handleFilters, FilterType } from './steps/tiktok-filters-handler.js';
@@ -23,7 +23,7 @@ const filterConfig = {
     // [FilterType.LIKES]: config.filters?.likes || null
 };
 
-router.addDefaultHandler(async ({ log, page, request }) => {
+router.addDefaultHandler(async ({ log, page }) => {
 
     // Проверяем, залогинены ли мы уже
     const loggedIn = await isLoggedIn(page);
@@ -51,14 +51,14 @@ router.addDefaultHandler(async ({ log, page, request }) => {
 
             if (loginSubmitted) {
                 // Check for CAPTCHA challenges
-                const captchaHandled = await handleCaptcha(page, log);
+                await handleCaptcha(page, log);
 
                 // Continue regardless of whether CAPTCHA was detected or not
                 // The handleCaptcha function returns true if CAPTCHA was detected and handled,
                 // and false if no CAPTCHA was detected (which is also a success case)
 
                 // Check for email verification code
-                const emailVerificationHandled = await handleEmailCodeVerification(page, log);
+                await handleEmailCodeVerification(page, log);
 
                 // Continue regardless of whether email verification was needed or not
                 // The handleEmailCodeVerification function returns true if verification was successful OR not needed

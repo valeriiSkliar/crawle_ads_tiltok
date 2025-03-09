@@ -1,5 +1,5 @@
 import { Page } from 'playwright';
-import { FilterElement, FilterType, FilterConfig, findFilterElements } from './find-filters-elements.js';
+import { FilterElement, FilterConfig, findFilterElements } from './find-filters-elements.js';
 import { delay } from '../steps.js';
 
 /**

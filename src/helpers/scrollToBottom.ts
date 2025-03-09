@@ -1,5 +1,4 @@
 import { Page } from "playwright";
-import { FilterElement } from "../steps/find-filters-elements.js";
 import { delay } from "../steps.js";
 
 // Функция для прокрутки страницы до нижней границы
@@ -77,36 +76,36 @@ export const scrollNaturally = async (
 };
 
 // Функция для очистки выбранных элементов в мультиселекте
-async function clearFilterSelections(page: Page, filter: FilterElement): Promise<void> {
-  console.log(`Clearing selections for filter "${filter.name}"`);
+// async function clearFilterSelections(page: Page, filter: FilterElement): Promise<void> {
+//   console.log(`Clearing selections for filter "${filter.name}"`);
   
-  try {
-    // Click on the filter to open the dropdown
-    await page.click(filter.selector);
-    await delay(500);
+//   try {
+//     // Click on the filter to open the dropdown
+//     await page.click(filter.selector);
+//     await delay(500);
     
-    // Find all close buttons for selected items
-    const closeButtons = await page.$$(`${filter.selector} .CcMultiSelect_ccItemLabelClose__F3dTP`);
+//     // Find all close buttons for selected items
+//     const closeButtons = await page.$$(`${filter.selector} .CcMultiSelect_ccItemLabelClose__F3dTP`);
     
-    if (closeButtons.length > 0) {
-      console.log(`Found ${closeButtons.length} selected items to clear`);
+//     if (closeButtons.length > 0) {
+//       console.log(`Found ${closeButtons.length} selected items to clear`);
       
-      // Click each close button to remove the selection
-      for (const button of closeButtons) {
-        await button.click();
-        await delay(300); // Small delay between clicks
-      }
+//       // Click each close button to remove the selection
+//       for (const button of closeButtons) {
+//         await button.click();
+//         await delay(300); // Small delay between clicks
+//       }
       
-      // Click outside to close the dropdown
-      await page.click('body', { position: { x: 10, y: 10 } });
-      await delay(500);
-    } else {
-      console.log('No selections to clear');
-      // Close the dropdown by clicking outside
-      await page.click('body', { position: { x: 10, y: 10 } });
-    }
-  } catch (error) {
-    console.error(`Error clearing selections for filter "${filter.name}":`, error);
-    throw error;
-  }
-}
+//       // Click outside to close the dropdown
+//       await page.click('body', { position: { x: 10, y: 10 } });
+//       await delay(500);
+//     } else {
+//       console.log('No selections to clear');
+//       // Close the dropdown by clicking outside
+//       await page.click('body', { position: { x: 10, y: 10 } });
+//     }
+//   } catch (error) {
+//     console.error(`Error clearing selections for filter "${filter.name}":`, error);
+//     throw error;
+//   }
+// }  

@@ -32,8 +32,8 @@ async function testGeminiAPI() {
       const response = await gemini.sendMessage(prompt);
       console.log('Response:', response);
       console.log('sendMessage test passed!');
-    } catch (error: any) {
-      if (error.message.includes('429 Too Many Requests')) {
+    } catch (error: unknown) {
+      if (error instanceof Error && error.message.includes('429 Too Many Requests')) {
         console.log('API rate limit reached. Test considered successful but limited by quota.');
       } else {
         throw error; // Re-throw if it's not a rate limit issue
@@ -56,8 +56,8 @@ async function testGeminiAPI() {
         console.log('Chunk:', chunk);
       }
       console.log('streamMessage test passed!');
-    } catch (error: any) {
-      if (error.message.includes('429 Too Many Requests')) {
+    } catch (error: unknown) {
+      if (error instanceof Error && error.message.includes('429 Too Many Requests')) {
         console.log('API rate limit reached. Test considered successful but limited by quota.');
       } else {
         throw error; // Re-throw if it's not a rate limit issue

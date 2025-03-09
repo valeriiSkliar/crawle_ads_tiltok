@@ -1,9 +1,9 @@
-import { GoogleGenerativeAI, GenerateContentRequest, GenerateContentResponse } from "@google/generative-ai";
+import { GoogleGenerativeAI, GenerateContentRequest, GenerativeModel, GenerateContentResult } from "@google/generative-ai";
 
 class GeminiService {
     private static instance: GeminiService | null = null;
     private genAI: GoogleGenerativeAI;
-    private model: any;  // Replace 'any' with a more specific type if known
+    private model: GenerativeModel;  // Replace 'any' with a more specific type if known
 
     private constructor(apiKey: string, modelName: string) {
         if (!apiKey) {
@@ -26,13 +26,14 @@ class GeminiService {
                 contents: [{ role: "user", parts: [{ text: prompt }] }],
             };
 
-            const response: GenerateContentResponse = await this.model.generateContent(request);
-            const text = response.response?.text();
+            const { response }: GenerateContentResult = await this.model.generateContent(request);
+            const text = response?.text();
             return text || null;  // Return null if no text in response
 
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Error sending message to Gemini:", error);
-            throw new Error(`Failed to send message to Gemini: ${error.message}`); //Re-throw for handling upstream.
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            throw new Error(`Failed to send message to Gemini: ${errorMessage}`);
         }
     }
 
@@ -44,11 +45,25 @@ class GeminiService {
             };
 
             const streamingResponse = await this.model.generateContentStream(request);
-            return streamingResponse.stream;
+            
+            // Transform the stream to match the expected return type
+            const transformedStream = {
+                [Symbol.asyncIterator]: async function* () {
+                    for await (const item of streamingResponse.stream) {
+                        const text = item.text();
+                        if (text) {
+                            yield text;
+                        }
+                    }
+                }
+            };
+            
+            return transformedStream;
 
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Error streaming message from Gemini:", error);
-            throw new Error(`Failed to stream message from Gemini: ${error.message}`);
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            throw new Error(`Failed to stream message from Gemini: ${errorMessage}`);
         }
     }
 
