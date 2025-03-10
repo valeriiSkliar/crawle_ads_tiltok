@@ -1,9 +1,11 @@
+
+// Load environment variables first
+import dotenv from 'dotenv';
+dotenv.config();
+
 // For more information, see https://crawlee.dev/
 import { PlaywrightCrawler } from 'crawlee';
-import dotenv from 'dotenv';
 import { router } from './routes.js';
-
-dotenv.config();
 
 const startUrls = ['https://ads.tiktok.com/business/creativecenter/inspiration/topads/pc/en'];
 
