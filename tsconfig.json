@@ -1,12 +1,24 @@
 {
-	"extends": "@apify/tsconfig",
+    "extends": "@apify/tsconfig",
 	"compilerOptions": {
 		"module": "NodeNext",
 		"moduleResolution": "NodeNext",
 		"target": "ES2022",
 		"outDir": "dist",
 		"noUnusedLocals": false,
-		"lib": ["DOM"]
+		"lib": ["DOM"],
+		"baseUrl": ".",
+		"paths": {
+			"@core/*": ["src/core/*"],
+			"@auth/*": ["src/auth/*"],
+			"@navigation/*": ["src/navigation/*"],
+			"@filters/*": ["src/filters/*"],
+			"@data/*": ["src/data/*"],
+			"@services/*": ["src/services/*"],
+			"@utils/*": ["src/utils/*"],
+			"@lib/*": ["lib/*"],
+			"@/*": ["src/*"]
+		}
 	},
-	"include": ["./src/**/*"]
+	"include": ["./src/**/*", "./lib/**/*"]
 }

@@ -6,6 +6,5 @@ node_modules
 storage
 
 # Exclude files with credentials
-src/config.ts
 .env
 .windsurfrules

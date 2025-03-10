@@ -16,11 +16,11 @@ export const router = createPlaywrightRouter();
 const filterConfig = {
     [FilterType.REGION]: config.filters?.region || null,
     [FilterType.INDUSTRY]: config.filters?.industry || null,
-    // [FilterType.OBJECTIVE]: config.filters?.objective || null,
+    [FilterType.OBJECTIVE]: config.filters?.objective || null,
     [FilterType.PERIOD]: config.filters?.period || null,
     [FilterType.AD_LANGUAGE]: config.filters?.adLanguage || null,
-    // [FilterType.AD_FORMAT]: config.filters?.adFormat || null,
-    // [FilterType.LIKES]: config.filters?.likes || null
+    [FilterType.AD_FORMAT]: config.filters?.adFormat || null,
+    [FilterType.LIKES]: config.filters?.likes || null
 };
 
 router.addDefaultHandler(async ({ log, page }) => {

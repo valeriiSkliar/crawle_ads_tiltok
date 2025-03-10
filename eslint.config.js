@@ -6,7 +6,7 @@ import tseslint from "typescript-eslint";
 /** @type {import('eslint').Linter.Config[]} */
 export default [
   // Ignore test files
-  {ignores: ["**/*.test.ts", "**/*.test.js", "**/tests/**"]},
+  {ignores: ["**/*.test.ts", "**/*.test.js", "**/tests/**", "./examples/**"]},
   {files: ["**/*.{js,mjs,cjs,ts}"]},
   {files: ["**/*.js"], languageOptions: {sourceType: "commonjs"}},
   {languageOptions: { globals: globals.browser }},
