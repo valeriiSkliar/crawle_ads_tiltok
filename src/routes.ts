@@ -1,4 +1,11 @@
 import { createPlaywrightRouter } from 'crawlee';
+
+// Add global type declaration for our custom notification function
+declare global {
+    interface Window {
+        notifyContinue: () => void;
+    }
+}
 import {
     handleCookieConsent,
     clickLoginButton,
@@ -11,6 +18,7 @@ import { handleCaptcha, handleEmailCodeVerification, scrollAndCollectData } from
 import { config } from './config.js';
 import { checkApiResponsesFolderExistence, isLoggedIn, setupRequestInterception } from './helpers/index.js';
 import { handleFilters, FilterType } from './steps/tiktok-filters-handler.js';
+import { showProcessAbortedNotification } from './notifications/index.js';
 
 export const router = createPlaywrightRouter();
 const filterConfig = {
@@ -50,19 +58,24 @@ router.addDefaultHandler(async ({ log, page }) => {
             const loginSubmitted = await submitLoginForm(page, log);
 
             if (loginSubmitted) {
-                // Check for CAPTCHA challenges
-                await handleCaptcha(page, log);
-
-                // Continue regardless of whether CAPTCHA was detected or not
-                // The handleCaptcha function returns true if CAPTCHA was detected and handled,
-                // and false if no CAPTCHA was detected (which is also a success case)
-
-                // Check for email verification code
-                await handleEmailCodeVerification(page, log);
-
-                // Continue regardless of whether email verification was needed or not
-                // The handleEmailCodeVerification function returns true if verification was successful OR not needed
-                log.info('Successfully logged in to TikTok!');
+                try {
+                    // Check for CAPTCHA challenges
+                    // IMPORTANT: handleCaptcha will throw an error if captcha handling fails
+                    // This will prevent the process from continuing if a captcha is detected but not solved
+                    await handleCaptcha(page, log);
+                    
+                    // Check for email verification code
+                    await handleEmailCodeVerification(page, log);
+                    
+                    // If we get here, everything was successful
+                    log.info('Successfully logged in to TikTok!');
+                } catch (captchaError) {
+                    // If handleCaptcha threw an error, we need to stop the process
+                    await showProcessAbortedNotification(page, log, captchaError as Error);
+                    
+                    // Exit the process with an error code
+                    return; // End execution of this request handler
+                }
             } else {
                 log.error('Failed to log in to TikTok. Please check your credentials and try again.');
                 return; // Прекращаем выполнение, если вход не удался
