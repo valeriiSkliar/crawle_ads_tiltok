@@ -8,3 +8,6 @@ storage
 # Exclude files with credentials
 .env
 .windsurfrules
+CLAUDE.md
+test-env.js
+
