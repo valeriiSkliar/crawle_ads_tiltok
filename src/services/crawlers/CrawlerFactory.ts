@@ -73,7 +73,7 @@ export class CrawlerFactory {
       },
       
       // Use a function that delegates to the router
-      requestHandler: router,
+      requestHandler: router.getHandler(),
       
       // Set timeouts
       navigationTimeoutSecs: options.navigationTimeoutSecs ?? 300, // 5 minutes
@@ -105,7 +105,7 @@ export class CrawlerFactory {
   ): CheerioCrawler {
     return new CheerioCrawler({
       // Use a function that delegates to the router
-      requestHandler: router,
+      requestHandler: router.getHandler(),
       
       // Set timeouts
       requestHandlerTimeoutSecs: options.requestHandlerTimeoutSecs ?? 60,
@@ -146,7 +146,7 @@ export class CrawlerFactory {
       },
       
       // Use a function that delegates to the router
-      requestHandler: router,
+      requestHandler: router.getHandler(),
       
       // Set timeouts
       navigationTimeoutSecs: options.navigationTimeoutSecs ?? 300,
@@ -178,7 +178,7 @@ export class CrawlerFactory {
   ): JSDOMCrawler {
     return new JSDOMCrawler({
       // Use a function that delegates to the router
-      requestHandler: router,
+      requestHandler: router.getHandler(),
       
       // Set timeouts
       requestHandlerTimeoutSecs: options.requestHandlerTimeoutSecs ?? 60,
