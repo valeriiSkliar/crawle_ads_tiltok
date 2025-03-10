@@ -19,6 +19,9 @@ export const ENV = {
   // TikTok Credentials
   TIKTOK_EMAIL: process.env.TIKTOK_EMAIL || '',
   TIKTOK_PASSWORD: process.env.TIKTOK_PASSWORD || '',
+
+  // Mailgun Settings
+  MAILGUN_API_KEY: process.env.MAILGUN_API_KEY || '',
   
   // Crawler Settings
   CRAWLER_MAX_WAIT_TIME: parseInt(process.env.CRAWLER_MAX_WAIT_TIME || '100000', 10),

@@ -12,6 +12,11 @@ export const config = {
         password: ENV.TIKTOK_PASSWORD,
     },
 
+    // Mailgun settings
+    mailgun: {
+        apiKey: ENV.MAILGUN_API_KEY,
+    },
+
     // Crawler settings
     crawler: {
         // Maximum wait time in milliseconds for debugging/inspection
