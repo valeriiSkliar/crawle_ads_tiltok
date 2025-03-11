@@ -223,21 +223,46 @@ export class EmailApiService {
         const codeResponse = await this.getTikTokVerificationCode();
         
         if (codeResponse.code) {
-          this.log.info(`Successfully retrieved verification code: ${codeResponse.code}`);
+          if (codeResponse.status === 'used') {
+            this.log.warning('Verification code has already been used, retrying...', {
+              code: codeResponse.code,
+              timestamp: codeResponse.timestamp,
+              attempt: attempts,
+              remainingAttempts: maxAttempts - attempts,
+              retryDelay: '1 second'
+            });
+            await new Promise(resolve => setTimeout(resolve, 1000)); // 1 second pause for used codes
+            continue;
+          }
+
+          this.log.info(`Successfully retrieved fresh verification code`, {
+            code: codeResponse.code,
+            status: codeResponse.status,
+            timestamp: codeResponse.timestamp,
+            attemptsNeeded: attempts
+          });
           return { 
             code: codeResponse.code, 
             success: true 
           };
         } else {
           this.log.warning('No verification code found yet, waiting to retry...', { 
-            response: codeResponse 
+            response: codeResponse,
+            attempt: attempts,
+            remainingAttempts: maxAttempts - attempts,
+            retryDelay: `${pollingInterval}ms`
           });
           
           // Wait before trying again
           await new Promise(resolve => setTimeout(resolve, pollingInterval));
         }
       } catch (error) {
-        this.log.error('Error retrieving verification code:', { error: (error as Error).message });
+        this.log.error('Error retrieving verification code:', { 
+          error: (error as Error).message,
+          attempt: attempts,
+          remainingAttempts: maxAttempts - attempts,
+          retryDelay: `${pollingInterval / 2}ms`
+        });
         
         // Wait before retrying
         await new Promise(resolve => setTimeout(resolve, pollingInterval / 2));
@@ -306,5 +331,3 @@ export class EmailApiService {
     }
   }
 }
-
-
