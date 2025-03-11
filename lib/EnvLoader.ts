@@ -19,6 +19,8 @@ export const ENV = {
   // TikTok Credentials
   TIKTOK_EMAIL: process.env.TIKTOK_EMAIL || '',
   TIKTOK_PASSWORD: process.env.TIKTOK_PASSWORD || '',
+  SAD_CAPTCHA_API_KEY: process.env.SAD_CAPTCHA_API_KEY || '',
+
 
   // Mailgun Settings
   MAILGUN_API_KEY: process.env.MAILGUN_API_KEY || '',

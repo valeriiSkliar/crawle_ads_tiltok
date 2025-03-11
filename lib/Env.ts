@@ -22,6 +22,7 @@ export const Env = createEnv({
     // API Keys
     OPENAI_API_KEY: z.string().optional(),
     GEMINI_API_KEY: z.string().optional(),
+    SAD_CAPTCHA_API_KEY: z.string(),
     
     // TikTok Credentials
     TIKTOK_EMAIL: z.string(),
@@ -66,6 +67,7 @@ export const Env = createEnv({
     // API Keys
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
     GEMINI_API_KEY: process.env.GEMINI_API_KEY,
+    SAD_CAPTCHA_API_KEY: process.env.SAD_CAPTCHA_API_KEY,
     
     // TikTok Credentials
     TIKTOK_EMAIL: process.env.TIKTOK_EMAIL,
