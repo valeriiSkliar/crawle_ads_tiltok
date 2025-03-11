@@ -156,8 +156,8 @@ export async function handleEmailCodeVerification(page: Page, log: Log): Promise
                     
                     await page.screenshot({ path: 'storage/screenshots/after-code-entry.png' });
                     
-                    // Try to find and click the submit button using page.evaluate
-                    const submitButtonSelector = 'button[type="submit"], button:has-text("Submit"), button:has-text("Verify"), button.tiktokads-common-login-code-form-submit, .tiktokads-common-login-code-form-submit';
+                    // Updated selector for the submit button based on the actual markup
+                    const submitButtonSelector = 'button[name="CodeloginBtn"], #TikTok_Ads_SSO_Login_Code_Btn, button.btn.primary';
                     
                     const submitClicked = await page.evaluate(({ selector }) => {
                         const buttons = Array.from(document.querySelectorAll(selector));
