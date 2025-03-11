@@ -7,11 +7,16 @@
 		"target": "ES2022",
 		"outDir": "dist",
 		"noUnusedLocals": false,
-		"lib": ["DOM"],
+		"lib": ["DOM", "ES2022"],
+		"esModuleInterop": true,
+		"allowSyntheticDefaultImports": true,
+		"skipLibCheck": true,
+		"forceConsistentCasingInFileNames": true,
 		"paths": {
 			"@lib/*": ["lib/*"],
 			"@src/*": ["src/*"]
 		}
 	},
-	"include": ["./src/**/*", "./lib/**/*"]
+	"include": ["./src/**/*"],
+	"exclude": ["node_modules", "dist"]
 }

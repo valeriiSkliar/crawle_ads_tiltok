@@ -1,5 +1,6 @@
 import { Page } from 'playwright';
 import { Log } from 'crawlee';
+import { EmailApiService } from '../utils/emailApiService.js';
 
 /**
  * Handle email verification code challenge from TikTok
@@ -14,49 +15,98 @@ export async function handleEmailVerification(page: Page, log: Log): Promise<boo
         // Take a screenshot to help with debugging
         await page.screenshot({ path: 'storage/screenshots/email-verification-check.png' });
         
-        // Selectors for email verification form
-        const emailVerificationSelectors = [
-            'div.tiktokads-common-login-code-form',
-            '#TikTok_Ads_SSO_Login_Code_Content',
-            'input[name="code"]',
-            '#TikTok_Ads_SSO_Login_Code_Input',
-            'div:has-text("For security reasons, a verification code has been sent to")',
-            'div:has-text("Verification code")'
-        ];
+        // Primary selector for the email verification form
+        const mainFormSelector = '#TikTok_Ads_SSO_Login_Code_Content';
+
+        // Wait for the main verification form to be present
+        await page.waitForSelector(mainFormSelector, { timeout: 5000 }).catch(() => {});
         
-        // Check for email verification form presence
-        let verificationDetected = false;
-        let emailAddress = '';
+        // Check if the main verification form is present
+        const isVerificationFormVisible = await page.isVisible(mainFormSelector).catch(() => false);
         
-        for (const selector of emailVerificationSelectors) {
-            const isVisible = await page.isVisible(selector).catch(() => false);
-            if (isVisible) {
-                verificationDetected = true;
-                log.info(`Email verification detected with selector: ${selector}`);
-                
-                // Try to get the email address to which the code was sent
-                try {
-                    const emailElement = await page.$('#TikTok_Ads_SSO_Login_Code_Email');
-                    if (emailElement) {
-                        emailAddress = await emailElement.textContent() || '';
-                        log.info(`Verification code sent to: ${emailAddress}`);
-                    }
-                } catch (e) {
-                    log.debug('Could not retrieve email address:', { error: (e as Error).message });
-                }
-                
-                break;
-            }
+        if (!isVerificationFormVisible) {
+            log.info('No email verification required');
+            return false;
         }
         
-        if (verificationDetected) {
-            // Take a screenshot of the verification form
-            await page.screenshot({ path: 'storage/screenshots/email-verification-detected.png' });
+        // Verification form is detected
+        log.info('Email verification form detected');
+        await page.screenshot({ path: 'storage/screenshots/email-verification-detected.png' });
+        
+        // Get the email address to which the code was sent
+        let emailAddress = '';
+        try {
+            const emailElement = await page.$('#TikTok_Ads_SSO_Login_Code_Email');
+            if (emailElement) {
+                emailAddress = await emailElement.textContent() || '';
+                log.info(`Verification code sent to: ${emailAddress}`);
+            }
+        } catch (e) {
+            log.debug('Could not retrieve email address:', { error: (e as Error).message });
+        }
+        
+        // Initialize the email API service
+        const emailApiService = new EmailApiService(log);
+        
+        // Try to get verification code automatically first
+        let verificationCode = '';
+        let autoVerificationSucceeded = false;
+        
+        try {
+            log.info('Attempting to automatically retrieve verification code from email API...');
             
-            log.warning(`Email verification required! Waiting for manual intervention...`);
+            // Check if the email server is running
+            const serverStatus = await emailApiService.getServerStatus().catch(() => null);
+            if (!serverStatus) {
+                log.warning('Email server is not running or not accessible. Will require manual verification.');
+            } else {
+                log.info('Email server is running. Fetching verification code...');
+                
+                // Get the verification code
+                const codeResponse = await emailApiService.getTikTokVerificationCode();
+                
+                if (codeResponse.code) {
+                    verificationCode = codeResponse.code;
+                    log.info(`Successfully retrieved verification code: ${verificationCode}`);
+                    
+                    // Enter the verification code in the input field
+                    try {
+                        // Use the exact selector from the HTML
+                        const codeInputSelector = '#TikTok_Ads_SSO_Login_Code_Input';
+                        await page.waitForSelector(codeInputSelector, { timeout: 5000 });
+                        await page.fill(codeInputSelector, verificationCode);
+                        log.info('Entered verification code in the input field');
+                        
+                        // Click the login button
+                        const loginButtonSelector = '#TikTok_Ads_SSO_Login_Code_Btn';
+                        await page.waitForSelector(loginButtonSelector, { timeout: 5000 });
+                        await page.click(loginButtonSelector);
+                        log.info('Clicked the login button');
+                        
+                        // Wait for navigation or verification completion
+                        await page.waitForTimeout(3000);
+                        autoVerificationSucceeded = true;
+                    } catch (e) {
+                        log.error('Error entering verification code or clicking login button:', { error: (e as Error).message });
+                    }
+                } else {
+                    log.warning('No verification code found in email API response', { response: codeResponse });
+                }
+            }
+        } catch (error) {
+            log.error('Error during automatic verification:', { error: (error as Error).message });
+            // Continue to manual verification as fallback
+        }
+        
+        // Check if we're still on the verification page
+        const stillOnVerification = await page.isVisible(mainFormSelector).catch(() => false);
+        
+        // If automatic verification failed, fall back to manual verification
+        if (!autoVerificationSucceeded || stillOnVerification) {
+            log.warning(`Automatic verification ${autoVerificationSucceeded ? 'may have failed' : 'failed'}. Falling back to manual verification...`);
             
-            // Display a message for the user
-            await page.evaluate((email) => {
+            // Display a message for the user with the verification code
+            const messageScript = `
                 const messageDiv = document.createElement('div');
                 messageDiv.id = 'manual-verification-message';
                 messageDiv.style.position = 'fixed';
@@ -70,17 +120,25 @@ export async function handleEmailVerification(page: Page, log: Log): Promise<boo
                 messageDiv.style.zIndex = '9999';
                 messageDiv.style.borderRadius = '5px';
                 
-                messageDiv.innerHTML = `
+                let codeMessage = '';
+                if ('${verificationCode}') {
+                    codeMessage = \`<p>Retrieved verification code: <strong>${verificationCode}</strong></p>
+                    <p>Please enter this code in the form if it's not already entered.</p>\`;
+                } else {
+                    codeMessage = \`<p>Please check ${emailAddress ? emailAddress : 'your email'} for a verification code from "TikTok For Business".</p>\`;
+                }
+                
+                messageDiv.innerHTML = \`
                     <p>EMAIL VERIFICATION REQUIRED!</p>
-                    <p>Please check ${email ? email : 'your email'} for a verification code from "TikTok For Business".</p>
+                    \${codeMessage}
                     <p>Enter the code in the form and click "Log in".</p>
                     <p>Press Enter or click the button below when done.</p>
-                `;
+                \`;
                 
                 // Add a button for users who prefer clicking
                 const doneButton = document.createElement('button');
                 doneButton.id = 'verification-done-button';
-                doneButton.textContent = 'I\'ve entered the verification code';
+                doneButton.textContent = 'I\\'ve entered the verification code';
                 doneButton.style.display = 'block';
                 doneButton.style.marginTop = '10px';
                 doneButton.style.padding = '8px 15px';
@@ -92,7 +150,9 @@ export async function handleEmailVerification(page: Page, log: Log): Promise<boo
                 
                 messageDiv.appendChild(doneButton);
                 document.body.appendChild(messageDiv);
-            }, emailAddress);
+            `;
+            
+            await page.evaluate(messageScript);
             
             log.info('Waiting for user to enter verification code...');
             
@@ -121,31 +181,20 @@ export async function handleEmailVerification(page: Page, log: Log): Promise<boo
                     messageDiv.remove();
                 }
             });
-            
-            // Wait a moment for any animations to complete
-            await page.waitForTimeout(2000);
-            
-            // Check if we're still on the verification page
-            let stillOnVerification = false;
-            for (const selector of emailVerificationSelectors) {
-                const isVisible = await page.isVisible(selector).catch(() => false);
-                if (isVisible) {
-                    stillOnVerification = true;
-                    log.warning(`Still on verification page after user intervention.`);
-                    break;
-                }
-            }
-            
-            if (stillOnVerification) {
-                log.warning('Email verification might not have been completed correctly.');
-                return false;
-            } else {
-                log.info('Email verification appears to be completed successfully!');
-                return true;
-            }
-        } else {
-            log.info('No email verification required');
+        }
+        
+        // Wait a moment for any animations to complete
+        await page.waitForTimeout(2000);
+        
+        // Check if we're still on the verification page
+        const finalVerificationCheck = await page.isVisible(mainFormSelector).catch(() => false);
+        
+        if (finalVerificationCheck) {
+            log.warning('Email verification might not have been completed correctly.');
             return false;
+        } else {
+            log.info('Email verification appears to be completed successfully!');
+            return true;
         }
     } catch (error) {
         log.error('Error in email verification handling:', { error: (error as Error).message });
