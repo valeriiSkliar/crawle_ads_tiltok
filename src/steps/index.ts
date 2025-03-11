@@ -4,3 +4,4 @@ export * from './scrollAndCollectData.js';
 export * from './find-filters-elements.js';
 export * from './set-filters.js';
 export * from './handleCaptchaSolverApi.js';
+export * from './captcha-detection-step.js';

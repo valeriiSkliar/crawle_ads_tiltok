@@ -14,7 +14,7 @@ import {
     submitLoginForm,
     delay
 } from './steps.js';
-import { handleCaptcha, handleEmailCodeVerification, scrollAndCollectData } from './steps/index.js';
+import { handleCaptchaSolverApi, handleEmailCodeVerification, scrollAndCollectData } from './steps/index.js';
 import { config } from './config.js';
 import { checkApiResponsesFolderExistence, isLoggedIn, setupRequestInterception } from './helpers/index.js';
 import { handleFilters, FilterType } from './steps/tiktok-filters-handler.js';
@@ -62,7 +62,8 @@ router.addDefaultHandler(async ({ log, page }) => {
                     // Check for CAPTCHA challenges
                     // IMPORTANT: handleCaptcha will throw an error if captcha handling fails
                     // This will prevent the process from continuing if a captcha is detected but not solved
-                    await handleCaptcha(page, log);
+                    // await handleCaptcha(page, log);
+                    await handleCaptchaSolverApi(page, log);
                     
                     // Check for email verification code
                     await handleEmailCodeVerification(page, log);

@@ -1,112 +1,39 @@
 import { Page } from 'playwright';
 import { Log } from 'crawlee';
+import { checkForCaptcha } from './captcha-detection-step.js';
+
+declare global {
+    interface Window {
+        notifyContinue: () => void;
+        notifyRefresh?: () => void;
+    }
+}
 
 /**
- * Check for CAPTCHA and wait for user to solve it manually
+ * Handle CAPTCHA and wait for user to solve it manually if detected
  * @param page - Playwright page object
  * @param log - Logger instance
- * @returns Promise<boolean> - Whether CAPTCHA was detected and handled
+ * @returns Promise<boolean> - Whether CAPTCHA was handled successfully
  */
 export async function handleCaptchaSolverApi(page: Page, log: Log): Promise<boolean> {
     try {
-        log.info('Checking for CAPTCHA...');
-        
-        // Take a screenshot to help with debugging
-        await page.screenshot({ path: 'storage/screenshots/captcha-check.png' });
-        await page.waitForTimeout(8000); // Check every 8000ms
-        
-        // Common CAPTCHA selectors
-        const captchaSelectors = [
-            'div.captcha_verify_container',
-            'div[class*="captcha"]',
-            'iframe[src*="captcha"]',
-            'div[id*="captcha"]',
-            'img[src*="captcha"]',
-            'div:has-text("Verify you are human")',
-            'div:has-text("Security check")',
-            'div:has-text("Please verify")',
-            'div:has-text("Select 2 objects that are the same shape")'
-        ];
-        
         // Check for CAPTCHA presence
-        let captchaDetected = false;
+        const { detected, screenshotPath } = await checkForCaptcha(page, log);
         
-        for (const selector of captchaSelectors) {
-            try {
-                const visibleSelector = await page.waitForSelector(selector, { timeout: 1000 });
-                const isVisible = await visibleSelector?.isVisible();
-                if (isVisible) {
-                    captchaDetected = true;
-                    log.info(`CAPTCHA detected with selector: ${selector}`);
-                    break;
-                }
-            } catch (err: unknown) {
-                if (err instanceof Error) {
-                    log.error('Error checking for CAPTCHA:', { error: err.message });  
-                }
-                // Continue checking other selectors
-            }
+        // If no CAPTCHA is detected, return early
+        if (!detected) {
+            log.info('No CAPTCHA detected, continuing process.');
+            return false;
         }
         
-        // Always pause the process - take a screenshot showing current state
-        await page.screenshot({ path: 'storage/screenshots/process-paused.png' });
+        log.warning(`CAPTCHA detected! Process paused for manual intervention. Screenshot saved at: ${screenshotPath}`);
         
-        if (captchaDetected) {
-            log.warning('CAPTCHA detected! Process paused for manual intervention...');
-        } else {
-            log.info('Process paused for manual checking/intervention...');
-        }
-        
-        // Create a simple notification overlay with plain HTML
-        await page.evaluate(() => {
-            // First clean up any existing notifications
-            const existing = document.getElementById('captcha-notification');
-            if (existing) existing.remove();
-            
-            // Create the container
-            const container = document.createElement('div');
-            container.id = 'captcha-notification';
-            container.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:99999;display:flex;justify-content:center;align-items:center;';
-            
-            // Create the box
-            const box = document.createElement('div');
-            box.style.cssText = 'background:white;padding:30px;border-radius:10px;text-align:center;max-width:400px;';
-            
-            // Create header
-            const header = document.createElement('h2');
-            header.textContent = document.querySelector('div[class*="captcha"]') ? 'CAPTCHA DETECTED!' : 'PROCESS PAUSED';
-            header.style.cssText = 'color:#ff3030;margin-bottom:20px;';
-            
-            // Create description
-            const description = document.createElement('p');
-            description.textContent = 'Please complete the CAPTCHA or any verification steps required. The process is paused until you click "Continue" below.';
-            description.style.cssText = 'margin-bottom:30px;';
-            
-            // Create button
-            const button = document.createElement('button');
-            button.id = 'continue-button';
-            button.textContent = 'Continue Process';
-            button.style.cssText = 'background:#4CAF50;color:white;padding:10px 20px;border:none;border-radius:5px;cursor:pointer;font-size:16px;font-weight:bold;';
-            
-            // Add hover effect to button
-            button.onmouseover = () => button.style.background = '#45a049';
-            button.onmouseout = () => button.style.background = '#4CAF50';
-            
-            // Add all elements to the DOM
-            box.appendChild(header);
-            box.appendChild(description);
-            box.appendChild(button);
-            container.appendChild(box);
-            document.body.appendChild(container);
-            
-            // Make sure the container is absolutely the top element
-            document.body.style.overflow = 'hidden'; // Prevent scrolling
-        });
+        // Take a pause screenshot showing current state
+        // await page.screenshot({ path: 'storage/screenshots/process-paused.png' });
         
         log.info('Waiting for user to click continue...');
         
-        // An extremely simple approach using polling: check every 500ms if the button was clicked
-        // This avoids the complex Promise evaluation in the browser context that was causing issues
+        // Setup for detecting button click
         let buttonClicked = false;
         
         // Setup the click event with exposeFunction to avoid complex browser context evaluation
@@ -114,15 +41,46 @@ export async function handleCaptchaSolverApi(page: Page, log: Log): Promise<bool
             buttonClicked = true;
         });
         
+        const logInstance = new Log({ prefix: 'CaptchaHandler' });
+
         // Add the click listener to the button
         await page.evaluate(() => {
             const button = document.getElementById('continue-button');
+            const confirmButton = document.querySelector('.verify-captcha-submit-button');
+            const refreshButton = document.querySelector('.secsdk_captcha_refresh');
+            
+            // Log button presence for debugging
+            console.log({
+                continueButtonPresent: !!button,
+                confirmButtonPresent: !!confirmButton,
+                refreshButtonPresent: !!refreshButton
+            });
+
             if (button) {
                 button.addEventListener('click', () => {
+                    console.log('Continue button clicked');
                     window.notifyContinue();
                 });
             }
+            
+            if (confirmButton) {
+                confirmButton.addEventListener('click', () => {
+                    console.log('Confirm button clicked');
+                    window.notifyContinue();
+                });
+            }
+
+            if (refreshButton) {
+                refreshButton.addEventListener('click', () => {
+                    console.log('Refresh button clicked');
+                    if (window.notifyRefresh) {
+                        window.notifyRefresh();
+                    }
+                });
+            }
         });
+
+        logInstance.info('Added event listeners to captcha buttons');
         
         // Poll until the button is clicked
         const startTime = Date.now();
@@ -144,6 +102,7 @@ export async function handleCaptchaSolverApi(page: Page, log: Log): Promise<bool
             const notification = document.getElementById('captcha-notification');
             if (notification) {
                 notification.remove();
+                document.body.style.overflow = ''; // Restore scrolling
             }
         });
         
@@ -153,7 +112,7 @@ export async function handleCaptchaSolverApi(page: Page, log: Log): Promise<bool
         // Critical error handling
         log.error('CRITICAL ERROR in CAPTCHA handling:', { error: (error as Error).message });
         
-        // Important: Re-throw the error to make the calling function abort
+        // Re-throw the error to make the calling function abort
         throw new Error(`CAPTCHA handling failed: ${(error as Error).message}. Process aborted.`);
     }
 }
