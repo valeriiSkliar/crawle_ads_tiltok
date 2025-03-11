@@ -15,7 +15,6 @@ const startUrls = ['https://ads.tiktok.com/business/creativecenter/inspiration/t
 //   return;
 // }
 
-
 const crawler = new PlaywrightCrawler({
     headless: false,
     // proxyConfiguration: new ProxyConfiguration({ proxyUrls: ['...'] }),
