@@ -141,7 +141,7 @@ export async function fillLoginForm(page: Page, log: Log, email: string, passwor
     log.info('Filling in login form with email and password');
     try {
         // Take a screenshot of the page before we start
-        await page.screenshot({ path: 'storage/screenshots/before-filling-form.png' });
+        // await page.screenshot({ path: 'storage/screenshots/before-filling-form.png' });
         
         // Wait for the login form to be visible - try multiple possible selectors
         const formSelectors = [
@@ -210,7 +210,7 @@ export async function fillLoginForm(page: Page, log: Log, email: string, passwor
         await emailInput.click();
         
         // Add a small random delay to simulate human thinking
-        await page.waitForTimeout(randomBetween(800, 1500));
+        await page.waitForTimeout(randomBetween(100, 500));
         
         // Type the email address with human-like typing speed
         await typeWithHumanDelay(page, emailInput, email);
@@ -218,7 +218,7 @@ export async function fillLoginForm(page: Page, log: Log, email: string, passwor
         log.info('Email entered');
         
         // Add a delay between filling email and password (like a human would)
-        await page.waitForTimeout(randomBetween(1000, 2000));
+        await page.waitForTimeout(randomBetween(100, 500));
         
         // Try the specific password selector first, then fall back to more general ones
         const passwordSelectors = [
@@ -261,7 +261,7 @@ export async function fillLoginForm(page: Page, log: Log, email: string, passwor
         await passwordInput.click();
         
         // Add a small random delay
-        await page.waitForTimeout(randomBetween(800, 1500));
+        await page.waitForTimeout(randomBetween(100, 500));
         
         // Type the password with human-like typing speed
         await typeWithHumanDelay(page, passwordInput, password);
@@ -269,10 +269,10 @@ export async function fillLoginForm(page: Page, log: Log, email: string, passwor
         log.info('Password entered');
         
         // Add a delay before proceeding (like a human would review their input)
-        await page.waitForTimeout(randomBetween(1200, 2500));
+        await page.waitForTimeout(randomBetween(100, 500));
         
         // Take a screenshot after filling the form
-        await page.screenshot({ path: 'storage/screenshots/after-filling-form.png' });
+        // await page.screenshot({ path: 'storage/screenshots/after-filling-form.png' });
         
         // We'll handle the submit button click in the submitLoginForm function
         
@@ -336,7 +336,7 @@ export async function submitLoginForm(page: Page, log: Log): Promise<boolean> {
         log.info('Submitting login form...');
         
         // Take a screenshot before submitting
-        await page.screenshot({ path: 'storage/screenshots/before-submit.png' });
+        // await page.screenshot({ path: 'storage/screenshots/before-submit.png' });
         
         // Find and click the login button - try multiple selectors with TikTok-specific ones first
         const loginButtonSelectors = [
@@ -371,7 +371,7 @@ export async function submitLoginForm(page: Page, log: Log): Promise<boolean> {
         
         if (!loginButton) {
             // Take a screenshot to help debug
-            await page.screenshot({ path: 'storage/screenshots/login-button-not-found.png' });
+            // await page.screenshot({ path: 'storage/screenshots/login-button-not-found.png' });
             log.warning('Could not find login button with predefined selectors. Trying to find any button...');
             
             // Try to find any button
@@ -395,13 +395,13 @@ export async function submitLoginForm(page: Page, log: Log): Promise<boolean> {
         log.info('Login form submitted');
         
         // Take a screenshot right after clicking
-        await page.screenshot({ path: 'storage/screenshots/after-submit-click.png' });
+        // await page.screenshot({ path: 'storage/screenshots/after-submit-click.png' });
         
         // Wait for navigation or response
         await delay(randomBetween(3000, 5000));
         
         // Take another screenshot after waiting
-        await page.screenshot({ path: 'storage/screenshots/after-submit-wait.png' });
+        // await page.screenshot({ path: 'storage/screenshots/after-submit-wait.png' });
         
         // Check for successful login
         // We can check for elements that are only visible when logged in
@@ -459,7 +459,7 @@ export async function submitLoginForm(page: Page, log: Log): Promise<boolean> {
                                   !currentUrl.includes('/login');
         
         // Take a screenshot to help debug
-        await page.screenshot({ path: 'storage/screenshots/login-result.png' });
+        // await page.screenshot({ path: 'storage/screenshots/login-result.png' });
         
         if (isAvatarVisible || isRedirectedToHome) {
             log.info('Login successful!');

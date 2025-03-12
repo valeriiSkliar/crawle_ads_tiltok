@@ -2,6 +2,7 @@ import { ENV } from '@lib/EnvLoader.js';
 import axios from 'axios';
 import { Log } from 'crawlee';
 import { Page } from 'playwright';
+import * as fs from 'fs';
 
 interface SadCaptchaResponse {
     pointOneProportionX: number;
@@ -18,20 +19,25 @@ export class SadCaptchaService {
         this.log = log;
     }
 
-    async solveCaptcha(page: Page, captchaImageSelector: string): Promise<boolean> {
+    async solveCaptcha(page: Page, captchaImageSelector: string, screenshotPath: string): Promise<boolean> {
         try {
+            if (!screenshotPath) {
+                this.log.error('No screenshot path provided for captcha solving');
+                return false;
+            }
+
+            page.waitForTimeout(1000);
+
+            // Read the existing screenshot
+            const buffer = await fs.promises.readFile(screenshotPath);
+            const imageBase64 = buffer.toString('base64');
+
             // Get the captcha element
             const captchaElement = await page.$(captchaImageSelector);
             if (!captchaElement) {
                 this.log.error('Captcha element not found');
                 return false;
             }
-
-            // Get the image as base64
-            const buffer = await captchaElement.screenshot({
-                type: 'png'
-            });
-            const imageBase64 = buffer.toString('base64');
 
             // Get solution from SadCaptcha API
             const solution = await this.getSolution(imageBase64);

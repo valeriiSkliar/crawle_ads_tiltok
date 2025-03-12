@@ -13,7 +13,7 @@ export async function handleEmailCodeVerification(page: Page, log: Log): Promise
         log.info('Checking for email verification...');
         
         // Take a screenshot to help with debugging
-        await page.screenshot({ path: 'storage/screenshots/verification-check.png' });
+        // await page.screenshot({ path: 'storage/screenshots/verification-check.png' });
         
         // Email verification selectors
         const verificationSelectors = [
@@ -42,7 +42,7 @@ export async function handleEmailCodeVerification(page: Page, log: Log): Promise
         
         if (verificationDetected) {
             // Take a screenshot of the verification form
-            await page.screenshot({ path: 'storage/screenshots/verification-detected.png' });
+            // await page.screenshot({ path: 'storage/screenshots/verification-detected.png' });
             
             // Try to get the email address to display to the user
             let emailAddress = "";
@@ -61,7 +61,7 @@ export async function handleEmailCodeVerification(page: Page, log: Log): Promise
             const enterVerificationCode = async (code: string): Promise<boolean> => {
                 try {
                     // Take a screenshot before attempting to find elements
-                    await page.screenshot({ path: 'storage/screenshots/before-code-entry.png' });
+                    // await page.screenshot({ path: 'storage/screenshots/before-code-entry.png' });
                     
                     // Log the page content for debugging
                     const pageContent = await page.content();
@@ -154,7 +154,7 @@ export async function handleEmailCodeVerification(page: Page, log: Log): Promise
                         log.info('Successfully entered verification code in main frame');
                     }
                     
-                    await page.screenshot({ path: 'storage/screenshots/after-code-entry.png' });
+                    // await page.screenshot({ path: 'storage/screenshots/after-code-entry.png' });
                     
                     // Updated selector for the submit button based on the actual markup
                     const submitButtonSelector = 'button[name="CodeloginBtn"], #TikTok_Ads_SSO_Login_Code_Btn, button.btn.primary';
@@ -229,7 +229,7 @@ export async function handleEmailCodeVerification(page: Page, log: Log): Promise
                         log.info('Successfully clicked submit button in main frame');
                     }
                     
-                    await page.screenshot({ path: 'storage/screenshots/after-submit.png' });
+                    // await page.screenshot({ path: 'storage/screenshots/after-submit.png' });
                     
                     // Wait for navigation or success indicator
                     await Promise.race([

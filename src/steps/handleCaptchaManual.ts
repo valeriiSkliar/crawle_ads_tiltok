@@ -12,7 +12,7 @@ export async function handleCaptcha(page: Page, log: Log): Promise<boolean> {
         log.info('Checking for CAPTCHA...');
         
         // Take a screenshot to help with debugging
-        await page.screenshot({ path: 'storage/screenshots/captcha-check.png' });
+        // await page.screenshot({ path: 'storage/screenshots/captcha-check.png' });
         await page.waitForTimeout(8000); // Check every 8000ms
         
         // Common CAPTCHA selectors

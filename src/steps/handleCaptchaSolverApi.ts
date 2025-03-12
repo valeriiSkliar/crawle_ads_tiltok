@@ -1,6 +1,7 @@
 import { Page } from 'playwright';
 import { Log } from 'crawlee';
 import { checkForCaptcha } from './captcha-detection-step.js';
+import { SadCaptchaService } from '@src/services/sadCaptchaService.js';
 
 declare global {
     interface Window {
@@ -18,69 +19,95 @@ declare global {
 export async function handleCaptchaSolverApi(page: Page, log: Log): Promise<boolean> {
     try {
         // Check for CAPTCHA presence
-        const { detected, screenshotPath } = await checkForCaptcha(page, log);
+        const { detected, screenshotPath, selector } = await checkForCaptcha(page, log);
         
         // If no CAPTCHA is detected, return early
-        if (!detected) {
+        if (!detected || !screenshotPath || !selector) {
             log.info('No CAPTCHA detected, continuing process.');
             return false;
         }
+
+        log.warning('CAPTCHA detected! Attempting to solve...');
+        const solver = new SadCaptchaService(log);
+        const solved = await solver.solveCaptcha(page, selector, screenshotPath);
         
-        log.warning(`CAPTCHA detected! Process paused for manual intervention. Screenshot saved at: ${screenshotPath}`);
+        if (solved) {
+            log.info('CAPTCHA solved successfully!');
+            // const solvedPath = path.join('storage/screenshots', `captcha-solved-${new Date().toISOString().replace(/[:.]/g, '-')}.png`);
+            // await page.screenshot({ path: solvedPath });
+        //     return true;
+        }
+
+        // If captcha was solved automatically, click the confirm button
+        // if (solved) {
+        //     log.info('Captcha solved automatically, clicking confirm button...');
+        //     try {
+        //         // Wait for the confirm button to be visible and click it
+        //         const confirmButton = await page.waitForSelector('.verify-captcha-submit-button', { timeout: 5000 });
+        //         if (confirmButton) {
+        //             await confirmButton.click();
+        //             log.info('Confirm button clicked successfully');
+        //             // Wait a moment to ensure the action is processed
+        //             await page.waitForTimeout(2000);
+        //             return true;
+        //         }
+        //     } catch (error) {
+        //         log.error('Failed to click confirm button:', { error: (error as Error).message });
+        //     }
+        // }
         
-        // Take a pause screenshot showing current state
-        // await page.screenshot({ path: 'storage/screenshots/process-paused.png' });
+        // log.warning(`CAPTCHA detected but not solved automatically. Screenshot saved at: ${screenshotPath}`);
         
-        log.info('Waiting for user to click continue...');
+        // log.info('Waiting for user to click continue...');
         
         // Setup for detecting button click
-        let buttonClicked = false;
+        const buttonClicked = false;
         
         // Setup the click event with exposeFunction to avoid complex browser context evaluation
-        await page.exposeFunction('notifyContinue', () => {
-            buttonClicked = true;
-        });
+        // await page.exposeFunction('notifyContinue', () => {
+        //     buttonClicked = true;
+        // });
         
-        const logInstance = new Log({ prefix: 'CaptchaHandler' });
+        // const logInstance = new Log({ prefix: 'CaptchaHandler' });
 
         // Add the click listener to the button
-        await page.evaluate(() => {
-            const button = document.getElementById('continue-button');
-            const confirmButton = document.querySelector('.verify-captcha-submit-button');
-            const refreshButton = document.querySelector('.secsdk_captcha_refresh');
+        // await page.evaluate(() => {
+        //     const button = document.getElementById('continue-button');
+        //     const confirmButton = document.querySelector('.verify-captcha-submit-button');
+        //     const refreshButton = document.querySelector('.secsdk_captcha_refresh');
             
-            // Log button presence for debugging
-            console.log({
-                continueButtonPresent: !!button,
-                confirmButtonPresent: !!confirmButton,
-                refreshButtonPresent: !!refreshButton
-            });
+        //     // Log button presence for debugging
+        //     console.log({
+        //         continueButtonPresent: !!button,
+        //         confirmButtonPresent: !!confirmButton,
+        //         refreshButtonPresent: !!refreshButton
+        //     });
 
-            if (button) {
-                button.addEventListener('click', () => {
-                    console.log('Continue button clicked');
-                    window.notifyContinue();
-                });
-            }
+        //     if (button) {
+        //         button.addEventListener('click', () => {
+        //             console.log('Continue button clicked');
+        //             window.notifyContinue();
+        //         });
+        //     }
             
-            if (confirmButton) {
-                confirmButton.addEventListener('click', () => {
-                    console.log('Confirm button clicked');
-                    window.notifyContinue();
-                });
-            }
+        //     if (confirmButton) {
+        //         confirmButton.addEventListener('click', () => {
+        //             console.log('Confirm button clicked');
+        //             window.notifyContinue();
+        //         });
+        //     }
 
-            if (refreshButton) {
-                refreshButton.addEventListener('click', () => {
-                    console.log('Refresh button clicked');
-                    if (window.notifyRefresh) {
-                        window.notifyRefresh();
-                    }
-                });
-            }
-        });
+        //     if (refreshButton) {
+        //         refreshButton.addEventListener('click', () => {
+        //             console.log('Refresh button clicked');
+        //             if (window.notifyRefresh) {
+        //                 window.notifyRefresh();
+        //             }
+        //         });
+        //     }
+        // });
 
-        logInstance.info('Added event listeners to captcha buttons');
+        // logInstance.info('Added event listeners to captcha buttons');
         
         // Poll until the button is clicked
         const startTime = Date.now();
@@ -95,16 +122,16 @@ export async function handleCaptchaSolverApi(page: Page, log: Log): Promise<bool
         }
         
         // Allow user to see the "continuing" message briefly
-        await page.waitForTimeout(2000);
+        // await page.waitForTimeout(2000);
         
         // Remove the notification
-        await page.evaluate(() => {
-            const notification = document.getElementById('captcha-notification');
-            if (notification) {
-                notification.remove();
-                document.body.style.overflow = ''; // Restore scrolling
-            }
-        });
+        // await page.evaluate(() => {
+        //     const notification = document.getElementById('captcha-notification');
+        //     if (notification) {
+        //         notification.remove();
+        //         document.body.style.overflow = ''; // Restore scrolling
+        //     }
+        // });
         
         log.info('Resuming process after manual intervention');
         return true;
