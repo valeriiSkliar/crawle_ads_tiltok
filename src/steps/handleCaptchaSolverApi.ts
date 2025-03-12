@@ -33,81 +33,8 @@ export async function handleCaptchaSolverApi(page: Page, log: Log): Promise<bool
         
         if (solved) {
             log.info('CAPTCHA solved successfully!');
-            // const solvedPath = path.join('storage/screenshots', `captcha-solved-${new Date().toISOString().replace(/[:.]/g, '-')}.png`);
-            // await page.screenshot({ path: solvedPath });
-        //     return true;
         }
-
-        // If captcha was solved automatically, click the confirm button
-        // if (solved) {
-        //     log.info('Captcha solved automatically, clicking confirm button...');
-        //     try {
-        //         // Wait for the confirm button to be visible and click it
-        //         const confirmButton = await page.waitForSelector('.verify-captcha-submit-button', { timeout: 5000 });
-        //         if (confirmButton) {
-        //             await confirmButton.click();
-        //             log.info('Confirm button clicked successfully');
-        //             // Wait a moment to ensure the action is processed
-        //             await page.waitForTimeout(2000);
-        //             return true;
-        //         }
-        //     } catch (error) {
-        //         log.error('Failed to click confirm button:', { error: (error as Error).message });
-        //     }
-        // }
-        
-        // log.warning(`CAPTCHA detected but not solved automatically. Screenshot saved at: ${screenshotPath}`);
-        
-        // log.info('Waiting for user to click continue...');
-        
-        // Setup for detecting button click
-        const buttonClicked = false;
-        
-        // Setup the click event with exposeFunction to avoid complex browser context evaluation
-        // await page.exposeFunction('notifyContinue', () => {
-        //     buttonClicked = true;
-        // });
-        
-        // const logInstance = new Log({ prefix: 'CaptchaHandler' });
-
-        // Add the click listener to the button
-        // await page.evaluate(() => {
-        //     const button = document.getElementById('continue-button');
-        //     const confirmButton = document.querySelector('.verify-captcha-submit-button');
-        //     const refreshButton = document.querySelector('.secsdk_captcha_refresh');
-            
-        //     // Log button presence for debugging
-        //     console.log({
-        //         continueButtonPresent: !!button,
-        //         confirmButtonPresent: !!confirmButton,
-        //         refreshButtonPresent: !!refreshButton
-        //     });
-
-        //     if (button) {
-        //         button.addEventListener('click', () => {
-        //             console.log('Continue button clicked');
-        //             window.notifyContinue();
-        //         });
-        //     }
-            
-        //     if (confirmButton) {
-        //         confirmButton.addEventListener('click', () => {
-        //             console.log('Confirm button clicked');
-        //             window.notifyContinue();
-        //         });
-        //     }
-
-        //     if (refreshButton) {
-        //         refreshButton.addEventListener('click', () => {
-        //             console.log('Refresh button clicked');
-        //             if (window.notifyRefresh) {
-        //                 window.notifyRefresh();
-        //             }
-        //         });
-        //     }
-        // });
-
-        // logInstance.info('Added event listeners to captcha buttons');
+        let buttonClicked = false;
         
         // Poll until the button is clicked
         const startTime = Date.now();
@@ -115,23 +42,20 @@ export async function handleCaptchaSolverApi(page: Page, log: Log): Promise<bool
         
         while (!buttonClicked && (Date.now() - startTime < maxWaitTime)) {
             await page.waitForTimeout(500); // Check every 500ms
+            const confirmButton = await page.waitForSelector('div.verify-captcha-submit-button', { timeout: 5000 });
+            if (confirmButton) {
+                buttonClicked = true;
+                await confirmButton.click();
+                log.info('Confirm button clicked successfully', { buttonClicked });
+                // Wait a moment to ensure the action is processed
+                await page.waitForTimeout(2000);
+                return true;
+            }
         }
         
         if (!buttonClicked) {
             throw new Error('Timed out waiting for user to click continue button.');
         }
-        
-        // Allow user to see the "continuing" message briefly
-        // await page.waitForTimeout(2000);
-        
-        // Remove the notification
-        // await page.evaluate(() => {
-        //     const notification = document.getElementById('captcha-notification');
-        //     if (notification) {
-        //         notification.remove();
-        //         document.body.style.overflow = ''; // Restore scrolling
-        //     }
-        // });
         
         log.info('Resuming process after manual intervention');
         return true;

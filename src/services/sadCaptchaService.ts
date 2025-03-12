@@ -33,6 +33,7 @@ export class SadCaptchaService {
             const imageBase64 = buffer.toString('base64');
 
             // Get the captcha element
+            this.log.info('Getting captcha element', { selector: captchaImageSelector });
             const captchaElement = await page.$(captchaImageSelector);
             if (!captchaElement) {
                 this.log.error('Captcha element not found');
@@ -56,16 +57,17 @@ export class SadCaptchaService {
             const clickPoints = [
                 {
                     x: boundingBox.width * solution.pointOneProportionX,
-                    y: boundingBox.width * solution.pointOneProportionY
+                    y: boundingBox.height * solution.pointOneProportionY
                 },
                 {
                     x: boundingBox.width * solution.pointTwoProportionX,
-                    y: boundingBox.width * solution.pointTwoProportionY
+                    y: boundingBox.height * solution.pointTwoProportionY
                 }
             ];
 
             // Click the points
             for (const point of clickPoints) {
+                this.log.info('Clicking point:', { x: point.x, y: point.y });
                 await captchaElement.click({
                     position: {
                         x: point.x,

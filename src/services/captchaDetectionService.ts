@@ -47,37 +47,51 @@ export class CaptchaDetectionService {
             let captchaDetected = false;
             let captchaSelector = '';
             let visibleSelector;
-            
-            // First check for the container to detect captcha presence
-            for (const selector of this.captchaSelectors) {
+            for (const imgSelector of this.captchaImageSelectors) {
                 try {
-                    visibleSelector = await page.waitForSelector(selector, { timeout: 1000 });
-                    const isVisible = await visibleSelector?.isVisible();
-                    if (isVisible) {
+                    visibleSelector = await page.waitForSelector(imgSelector, { timeout: 1000 });
+                    if (visibleSelector && await visibleSelector.isVisible()) {
+                        captchaSelector = imgSelector;
+                        await visibleSelector.screenshot({ path: screenshotPath });
+                        this.log.info(`CAPTCHA image found and screenshot taken with selector: ${imgSelector}`);
                         captchaDetected = true;
-                        captchaSelector = selector;
-                        
-                        // Now find and screenshot the actual captcha image
-                        for (const imgSelector of this.captchaImageSelectors) {
-                            try {
-                                const imageElement = await page.waitForSelector(imgSelector, { timeout: 1000 });
-                                if (imageElement && await imageElement.isVisible()) {
-                                    await imageElement.screenshot({ path: screenshotPath });
-                                    this.log.info(`CAPTCHA image found and screenshot taken with selector: ${imgSelector}`);
-                                    break;
-                                }
-                            } catch {
-                                continue;
-                            }
-                        }
-                        
-                        this.log.info(`CAPTCHA detected with selector: ${selector}`);
                         break;
                     }
                 } catch {
                     continue;
                 }
             }
+            
+            // // First check for the container to detect captcha presence
+            // for (const selector of this.captchaSelectors) {
+            //     try {
+            //         visibleSelector = await page.waitForSelector(selector, { timeout: 1000 });
+            //         const isVisible = await visibleSelector?.isVisible();
+            //         if (isVisible) {
+            //             captchaDetected = true;
+                        
+            //             // Now find and screenshot the actual captcha image
+            //             for (const imgSelector of this.captchaImageSelectors) {
+            //                 try {
+            //                     const imageElement = await page.waitForSelector(imgSelector, { timeout: 1000 });
+            //                     if (imageElement && await imageElement.isVisible()) {
+            //                         captchaSelector = imgSelector;
+            //                         await imageElement.screenshot({ path: screenshotPath });
+            //                         this.log.info(`CAPTCHA image found and screenshot taken with selector: ${imgSelector}`);
+            //                         break;
+            //                     }
+            //                 } catch {
+            //                     continue;
+            //                 }
+            //             }
+                        
+            //             this.log.info(`CAPTCHA detected with selector: ${captchaSelector}`);
+            //             break;
+            //         }
+            //     } catch {
+            //         continue;
+            //     }
+            // }
 
             return {
                 detected: captchaDetected,
