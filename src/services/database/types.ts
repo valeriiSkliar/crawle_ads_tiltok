@@ -1,3 +1,8 @@
+import { TikTokAdMaterial } from "@src/types/api.js";
+
+/**
+ * Represents the data structure for storing TikTok ads in the database.
+ */
 export interface AdData {
     id: string;
     countryCode: string;
@@ -5,21 +10,39 @@ export interface AdData {
     advertiserId: string;
     advertiserName: string;
     createdAt: Date;
-    metadata: Record<string, any>;
+    metadata: TikTokAdMaterial[];
 }
 
+/**
+ * Configuration options for database connections.
+ * Supports both SQLite and PostgreSQL configurations.
+ */
 export interface DatabaseConfig {
+    // Common options
+    filename?: string;  // For SQLite
+
+    // PostgreSQL specific options
     host?: string;
     port?: number;
+    database?: string;
     username?: string;
     password?: string;
-    database?: string;
-    filename?: string; // For SQLite
 }
 
+/**
+ * Core database interface following the interface-based design pattern.
+ * Provides type-safe operations for database interactions.
+ */
 export interface IDatabase {
+    // Connection management
     connect(): Promise<void>;
     disconnect(): Promise<void>;
+
+    // Core operations
+    query<T>(sql: string, params?: unknown[]): Promise<T>;
+    checkDuplicate(key: string): Promise<boolean>;
+    
+    // Ad-specific operations
     insertAd(data: AdData): Promise<void>;
     findAdById(id: string): Promise<AdData | null>;
     findAdByCreativeId(creativeId: string): Promise<AdData | null>;

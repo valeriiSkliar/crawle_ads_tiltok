@@ -1,5 +1,6 @@
 import { Database } from 'sqlite3';
-import { IDatabase, DatabaseConfig, AdData } from '../types.js';
+import { IDatabase } from '@src/services/database/types.js';
+import type { DatabaseConfig, AdData } from '@src/services/database/types.js';
 
 export class SQLiteDatabase implements IDatabase {
     private db: Database | null = null;
@@ -16,7 +17,7 @@ export class SQLiteDatabase implements IDatabase {
         return new Promise((resolve, reject) => {
             this.db = new Database(this.config.filename!, async (err) => {
                 if (err) {
-                    reject(err);
+                    reject(new Error(`Failed to connect to SQLite: ${err.message}`));
                     return;
                 }
                 await this.initializeDatabase();
@@ -26,8 +27,8 @@ export class SQLiteDatabase implements IDatabase {
     }
 
     private async initializeDatabase(): Promise<void> {
-        const sql = `
-            CREATE TABLE IF NOT EXISTS ads (
+        const tables = [
+            `CREATE TABLE IF NOT EXISTS ads (
                 id TEXT PRIMARY KEY,
                 country_code TEXT NOT NULL,
                 creative_id TEXT UNIQUE NOT NULL,
@@ -35,28 +36,58 @@ export class SQLiteDatabase implements IDatabase {
                 advertiser_name TEXT NOT NULL,
                 created_at DATETIME NOT NULL,
                 metadata TEXT NOT NULL
-            )
-        `;
+            )`,
+            `CREATE TABLE IF NOT EXISTS processed_items (
+                item_key TEXT PRIMARY KEY,
+                processed_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )`
+        ];
         
-        return new Promise((resolve, reject) => {
-            this.db!.run(sql, (err) => {
-                if (err) reject(err);
-                else resolve();
+        for (const sql of tables) {
+            await new Promise<void>((resolve, reject) => {
+                this.db!.run(sql, (err) => {
+                    if (err) reject(new Error(`Failed to initialize database: ${err.message}`));
+                    else resolve();
+                });
             });
-        });
+        }
     }
 
     async disconnect(): Promise<void> {
         return new Promise((resolve, reject) => {
             if (this.db) {
                 this.db.close((err) => {
-                    if (err) reject(err);
-                    else resolve();
+                    if (err) reject(new Error(`Failed to close SQLite connection: ${err.message}`));
+                    else {
+                        this.db = null;
+                        resolve();
+                    }
                 });
             } else {
                 resolve();
             }
         });
+    }
+
+    async query<T>(sql: string, params?: unknown[]): Promise<T> {
+        return new Promise((resolve, reject) => {
+            this.db!.all(sql, params, (err, rows) => {
+                if (err) reject(new Error(`SQLite query error: ${err.message}`));
+                else resolve(rows as T);
+            });
+        });
+    }
+
+    async checkDuplicate(key: string): Promise<boolean> {
+        try {
+            const result = await this.query<Array<{ exists: number }>>(
+                'SELECT EXISTS(SELECT 1 FROM processed_items WHERE item_key = ?) as exists',
+                [key]
+            );
+            return result[0]?.exists === 1;
+        } catch (error) {
+            throw new Error(`Failed to check duplicate: ${error instanceof Error ? error.message : String(error)}`);
+        }
     }
 
     async insertAd(data: AdData): Promise<void> {
@@ -78,7 +109,7 @@ export class SQLiteDatabase implements IDatabase {
 
         return new Promise((resolve, reject) => {
             this.db!.run(sql, params, (err) => {
-                if (err) reject(err);
+                if (err) reject(new Error(`Failed to insert ad: ${err.message}`));
                 else resolve();
             });
         });
@@ -90,7 +121,7 @@ export class SQLiteDatabase implements IDatabase {
         return new Promise((resolve, reject) => {
             this.db!.get(sql, [id], (err, row) => {
                 if (err) {
-                    reject(err);
+                    reject(new Error(`Failed to find ad by ID: ${err.message}`));
                 } else if (!row) {
                     resolve(null);
                 } else {
@@ -106,7 +137,7 @@ export class SQLiteDatabase implements IDatabase {
         return new Promise((resolve, reject) => {
             this.db!.get(sql, [creativeId], (err, row) => {
                 if (err) {
-                    reject(err);
+                    reject(new Error(`Failed to find ad by creative ID: ${err.message}`));
                 } else if (!row) {
                     resolve(null);
                 } else {
@@ -118,7 +149,7 @@ export class SQLiteDatabase implements IDatabase {
 
     async exists(criteria: Partial<AdData>): Promise<boolean> {
         const conditions: string[] = [];
-        const params: any[] = [];
+        const params: unknown[] = [];
 
         Object.entries(criteria).forEach(([key, value]) => {
             if (value !== undefined) {
@@ -131,9 +162,9 @@ export class SQLiteDatabase implements IDatabase {
         const sql = `SELECT EXISTS(SELECT 1 FROM ads WHERE ${conditions.join(' AND ')}) as exists`;
 
         return new Promise((resolve, reject) => {
-            this.db!.get(sql, params, (err, row) => {
-                if (err) reject(err);
-                else resolve(row.exists === 1);
+            this.db!.get(sql, params, (err, row: { exists: number } | undefined) => {
+                if (err) reject(new Error(`Failed to check existence: ${err.message}`));
+                else resolve(row?.exists === 1);
             });
         });
     }
@@ -145,16 +176,36 @@ export class SQLiteDatabase implements IDatabase {
         });
     }
 
-    private mapRowToAdData(row: any): AdData {
+    private mapRowToAdData(row: unknown): AdData {
+        if (!row || typeof row !== 'object') {
+            throw new Error('Invalid database row');
+        }
+        
+        const typedRow = row as Record<string, unknown>;
+        
+        if (!this.validateAdDataRow(typedRow)) {
+            throw new Error('Invalid ad data structure in database');
+        }
+
         return {
-            id: row.id,
-            countryCode: row.country_code,
-            creativeId: row.creative_id,
-            advertiserId: row.advertiser_id,
-            advertiserName: row.advertiser_name,
-            createdAt: new Date(row.created_at),
-            metadata: JSON.parse(row.metadata)
+            id: typedRow.id as string,
+            countryCode: typedRow.country_code as string,
+            creativeId: typedRow.creative_id as string,
+            advertiserId: typedRow.advertiser_id as string,
+            advertiserName: typedRow.advertiser_name as string,
+            createdAt: new Date(typedRow.created_at as string),
+            metadata: JSON.parse(typedRow.metadata as string)
         };
+    }
+
+    private validateAdDataRow(row: Record<string, unknown>): boolean {
+        return typeof row.id === 'string' &&
+               typeof row.country_code === 'string' &&
+               typeof row.creative_id === 'string' &&
+               typeof row.advertiser_id === 'string' &&
+               typeof row.advertiser_name === 'string' &&
+               typeof row.created_at === 'string' &&
+               typeof row.metadata === 'string';
     }
 
     private camelToSnakeCase(str: string): string {

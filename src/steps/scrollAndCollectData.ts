@@ -10,7 +10,7 @@ import { PaginationService } from "../services/paginationService.js";
  * @param page - экземпляр страницы Playwright
  * @param paginationService - сервис для работы с пагинацией
  * @param log - инстанс логгера
- * @param delayBetweenScrolls - базовая задержка между прокрутками в мс (по умолчанию 10000)
+ * @param delayBetweenScrolls - базовая задержка между прокрутками в мс (по умолчанию 5000)
  */
 export const scrollAndCollectData = async (
     page: Page,
