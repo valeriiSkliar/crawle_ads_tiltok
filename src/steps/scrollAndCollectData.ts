@@ -14,7 +14,7 @@ import { delay } from "../helpers/index.js";
 export const scrollAndCollectData = async (
     page: Page,
     scrollCount: number = 20,
-    delayBetweenScrolls: number = 10000,
+    delayBetweenScrolls: number = 5000,
     screenshotInterval: number = 5
 ) => {
     const log = console; // Используем console как логгер, если нет доступа к логгеру Crawlee
