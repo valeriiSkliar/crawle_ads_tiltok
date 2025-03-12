@@ -12,6 +12,8 @@ import { config } from './config.js';
 import { checkApiResponsesFolderExistence, isLoggedIn, setupRequestInterception, delay, randomBetween } from './helpers/index.js';
 import { handleFilters, FilterType } from './steps/tiktok-filters-handler.js';
 import { showProcessAbortedNotification } from './notifications/processAborted.js';
+import { PaginationService } from './services/paginationService.js';
+import { TikTokApiResponse } from './types/api.js';
 
 export const router = createPlaywrightRouter();
 const filterConfig = {
@@ -89,9 +91,19 @@ router.addDefaultHandler(async ({ log, page }) => {
     }
 
     try {
-        // Настраиваем перехват запросов к API
+        // Создаем сервис для работы с пагинацией
+        const paginationService = new PaginationService(log);
+        
+        // Настраиваем перехват запросов к API с обновлением пагинации
         await delay(randomBetween(1000, 3000));
-        await setupRequestInterception(page);
+        await setupRequestInterception(page, {
+            onResponse: (response: TikTokApiResponse) => {
+                if (response?.data?.pagination) {
+                    paginationService.updatePagination(response.data.pagination);
+                }
+            },
+            log
+        });
         checkApiResponsesFolderExistence();
 
         // Apply filters
@@ -103,7 +115,7 @@ router.addDefaultHandler(async ({ log, page }) => {
         }
 
         // Используем выделенную функцию для прокрутки страницы и сбора данных
-        await scrollAndCollectData(page);
+        await scrollAndCollectData(page, paginationService, log);
 
         log.info('Процесс прокрутки и сбора данных завершен.');
     } catch (error) {

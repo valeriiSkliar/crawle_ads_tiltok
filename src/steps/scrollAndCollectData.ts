@@ -1,44 +1,57 @@
 import { Page } from "playwright";
-import { scrollNaturally } from "../helpers/index.js";
-import { delay } from "../helpers/index.js";
+import { scrollNaturally, delay, randomBetween } from "../helpers/index.js";
+import { Log } from "crawlee";
+import { PaginationService } from "../services/paginationService.js";
 
 /**
- * Выполняет прокрутку страницы заданное количество раз с интервалом
- * и делает скриншоты через определенные интервалы для отладки
+ * Выполняет прокрутку страницы на основе данных о пагинации
+ * с естественными задержками между прокрутками
  * 
  * @param page - экземпляр страницы Playwright
- * @param scrollCount - количество прокруток (по умолчанию 20)
- * @param delayBetweenScrolls - задержка между прокрутками в мс (по умолчанию 10000)
- * @param screenshotInterval - интервал для создания скриншотов (по умолчанию каждые 5 прокруток)
+ * @param paginationService - сервис для работы с пагинацией
+ * @param log - инстанс логгера
+ * @param delayBetweenScrolls - базовая задержка между прокрутками в мс (по умолчанию 10000)
  */
 export const scrollAndCollectData = async (
     page: Page,
-    scrollCount: number = 20,
-    delayBetweenScrolls: number = 5000,
-    screenshotInterval: number = 5
+    paginationService: PaginationService,
+    log: Log,
+    delayBetweenScrolls: number = 5000
 ) => {
-    const log = console; // Используем console как логгер, если нет доступа к логгеру Crawlee
-
-    log.info('Начинаем процесс прокрутки страницы и сбора данных...');
+    const requiredScrolls = paginationService.getRequiredScrolls();
+    log.info('Начинаем процесс прокрутки страницы и сбора данных...', {
+        requiredScrolls
+    });
     
-    // Используем for-цикл вместо for-of для лучшего контроля
-    for (let i = 0; i < scrollCount; i++) {
-        log.info(`Прокрутка ${i + 1} из ${scrollCount}`);
+    for (let i = 0; i < requiredScrolls; i++) {
+        const progress = paginationService.getCurrentProgress();
+        log.info(`Прокрутка ${progress.current} из ${progress.total}`);
 
         try {
-            await scrollNaturally(page, 15, 150, 350, 800, 2000, 600);            
-            // Сделаем скриншот после каждой прокрутки для отладки
-            if (i % screenshotInterval === 0) {
-                await page.screenshot({
-                    path: `storage/screenshots/scroll-${i + 1}.png`,
-                    fullPage: false
-                });
-            }
+            // Естественная прокрутка с случайными параметрами
+            await scrollNaturally(
+                page,
+                randomBetween(10, 20),  // steps
+                randomBetween(100, 200), // minStep
+                randomBetween(300, 400), // maxStep
+                randomBetween(600, 1000), // minDelay
+                randomBetween(1500, 2500), // maxDelay
+                randomBetween(500, 700)  // initialDelay
+            );            
 
-            // Ждем указанное время между прокрутками
-            await delay(delayBetweenScrolls);
+            // Случайная задержка между прокрутками для имитации человеческого поведения
+            const randomDelay = randomBetween(
+                delayBetweenScrolls * 0.8,
+                delayBetweenScrolls * 1.2
+            );
+            await delay(randomDelay);
+            
         } catch (scrollError) {
-            log.error(`Ошибка при прокрутке ${i + 1}:`, { error: (scrollError as Error).message });
+            log.error(`Ошибка при прокрутке ${i + 1}:`, { 
+                error: (scrollError as Error).message,
+                currentScroll: i + 1,
+                totalScrolls: requiredScrolls
+            });
             // Продолжаем со следующей прокруткой, не прерывая весь процесс
         }
     }
