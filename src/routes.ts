@@ -9,7 +9,7 @@ declare global {
 
 import { clickLoginButton, handleCaptchaSolverApi, handleCookieConsent, handleEmailCodeVerification, fillLoginForm, scrollAndCollectData, selectPhoneEmailLogin, submitLoginForm } from './steps/index.js';
 import { config } from './config.js';
-import { checkApiResponsesFolderExistence, isLoggedIn, setupRequestInterception, delay } from './helpers/index.js';
+import { checkApiResponsesFolderExistence, isLoggedIn, setupRequestInterception, delay, randomBetween } from './helpers/index.js';
 import { handleFilters, FilterType } from './steps/tiktok-filters-handler.js';
 import { showProcessAbortedNotification } from './notifications/processAborted.js';
 
@@ -90,7 +90,7 @@ router.addDefaultHandler(async ({ log, page }) => {
 
     try {
         // Настраиваем перехват запросов к API
-        await delay(20000);
+        await delay(randomBetween(1000, 3000));
         await setupRequestInterception(page);
         checkApiResponsesFolderExistence();
 
