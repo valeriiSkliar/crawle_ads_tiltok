@@ -6,19 +6,12 @@ declare global {
         notifyContinue: () => void;
     }
 }
-import {
-    handleCookieConsent,
-    clickLoginButton,
-    selectPhoneEmailLogin,
-    fillLoginForm,
-    submitLoginForm,
-    delay
-} from './steps.js';
-import { handleCaptchaSolverApi, handleEmailCodeVerification, scrollAndCollectData } from './steps/index.js';
+
+import { clickLoginButton, handleCaptchaSolverApi, handleCookieConsent, handleEmailCodeVerification, fillLoginForm, scrollAndCollectData, selectPhoneEmailLogin, submitLoginForm } from './steps/index.js';
 import { config } from './config.js';
-import { checkApiResponsesFolderExistence, isLoggedIn, setupRequestInterception } from './helpers/index.js';
+import { checkApiResponsesFolderExistence, isLoggedIn, setupRequestInterception, delay } from './helpers/index.js';
 import { handleFilters, FilterType } from './steps/tiktok-filters-handler.js';
-import { showProcessAbortedNotification } from './notifications/index.js';
+import { showProcessAbortedNotification } from './notifications/processAborted.js';
 
 export const router = createPlaywrightRouter();
 const filterConfig = {
@@ -62,18 +55,18 @@ router.addDefaultHandler(async ({ log, page }) => {
                     // Check for CAPTCHA challenges
                     // IMPORTANT: handleCaptcha will throw an error if captcha handling fails
                     // This will prevent the process from continuing if a captcha is detected but not solved
-                    // await handleCaptcha(page, log);
+                    // await handleCaptchaSolverApi(page, log);
                     await handleCaptchaSolverApi(page, log);
-                    
+
                     // Check for email verification code
                     await handleEmailCodeVerification(page, log);
-                    
+
                     // If we get here, everything was successful
                     log.info('Successfully logged in to TikTok!');
                 } catch (captchaError) {
                     // If handleCaptcha threw an error, we need to stop the process
                     await showProcessAbortedNotification(page, log, captchaError as Error);
-                    
+
                     // Exit the process with an error code
                     return; // End execution of this request handler
                 }

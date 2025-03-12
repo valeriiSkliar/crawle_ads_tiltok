@@ -1,6 +1,6 @@
 import { Page } from 'playwright';
 import { FilterElement, FilterConfig, findFilterElements } from './find-filters-elements.js';
-import { delay } from '../steps.js';
+import { delay } from '../helpers/index.js';
 
 /**
  * Sets filter values based on the provided configuration

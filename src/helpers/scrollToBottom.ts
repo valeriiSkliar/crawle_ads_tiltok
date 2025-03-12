@@ -1,5 +1,5 @@
 import { Page } from "playwright";
-import { delay } from "../steps.js";
+import { delay } from "../helpers/index.js";
 
 // Функция для прокрутки страницы до нижней границы
 export const scrollToBottom = async (page: Page) => {

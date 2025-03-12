@@ -14,7 +14,8 @@
 		"forceConsistentCasingInFileNames": true,
 		"paths": {
 			"@lib/*": ["lib/*"],
-			"@src/*": ["src/*"]
+			"@src/*": ["src/*"],
+			"@helpers/*": ["src/helpers/*"]
 		}
 	},
 	"include": ["./src/**/*"],

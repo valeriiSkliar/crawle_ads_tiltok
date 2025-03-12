@@ -1,6 +1,6 @@
 import { Page } from "playwright";
 import { scrollNaturally } from "../helpers/index.js";
-import { delay } from "../steps.js";
+import { delay } from "../helpers/index.js";
 
 /**
  * Выполняет прокрутку страницы заданное количество раз с интервалом
