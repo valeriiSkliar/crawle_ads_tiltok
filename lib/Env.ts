@@ -23,6 +23,8 @@ export const Env = createEnv({
     OPENAI_API_KEY: z.string().optional(),
     GEMINI_API_KEY: z.string().optional(),
     SAD_CAPTCHA_API_KEY: z.string(),
+    CHAPTCHA_RESOLVE_MODE: z.enum(['manual', 'api']).default('manual'),
+    
     // Database URLs
     DATABASE_POSTGRES_URL: z.string().min(1),
     DATABASE_SQLITE_URL: z.string().min(1),
@@ -70,6 +72,7 @@ export const Env = createEnv({
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
     GEMINI_API_KEY: process.env.GEMINI_API_KEY,
     SAD_CAPTCHA_API_KEY: process.env.SAD_CAPTCHA_API_KEY,
+    CHAPTCHA_RESOLVE_MODE: process.env.CHAPTCHA_RESOLVE_MODE,
     
     // Database URLs
     DATABASE_POSTGRES_URL: process.env.DATABASE_POSTGRES_URL,

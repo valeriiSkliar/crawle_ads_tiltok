@@ -10,21 +10,21 @@ declare global {
 import { clickLoginButton, handleCaptchaSolverApi, handleCookieConsent, handleEmailCodeVerification, fillLoginForm, scrollAndCollectData, selectPhoneEmailLogin, submitLoginForm } from './steps/index.js';
 import { config } from './config.js';
 import { checkApiResponsesFolderExistence, isLoggedIn, setupRequestInterception, delay, randomBetween } from './helpers/index.js';
-import { handleFilters, FilterType } from './steps/tiktok-filters-handler.js';
+// import { handleFilters, FilterType } from './steps/tiktok-filters-handler.js';
 import { showProcessAbortedNotification } from './notifications/processAborted.js';
 import { PaginationService } from './services/paginationService.js';
 import { TikTokApiResponse } from './types/api.js';
 
 export const router = createPlaywrightRouter();
-const filterConfig = {
-    [FilterType.REGION]: config.filters?.region || null,
-    [FilterType.INDUSTRY]: config.filters?.industry || null,
-    [FilterType.OBJECTIVE]: config.filters?.objective || null,
-    [FilterType.PERIOD]: config.filters?.period || null,
-    [FilterType.AD_LANGUAGE]: config.filters?.adLanguage || null,
-    [FilterType.AD_FORMAT]: config.filters?.adFormat || null,
-    [FilterType.LIKES]: config.filters?.likes || null
-};
+// const filterConfig = {
+//     [FilterType.REGION]: config.filters?.region || null,
+//     [FilterType.INDUSTRY]: config.filters?.industry || null,
+//     [FilterType.OBJECTIVE]: config.filters?.objective || null,
+//     [FilterType.PERIOD]: config.filters?.period || null,
+//     [FilterType.AD_LANGUAGE]: config.filters?.adLanguage || null,
+//     [FilterType.AD_FORMAT]: config.filters?.adFormat || null,
+//     [FilterType.LIKES]: config.filters?.likes || null
+// };
 
 router.addDefaultHandler(async ({ log, page }) => {
 
@@ -107,12 +107,12 @@ router.addDefaultHandler(async ({ log, page }) => {
         checkApiResponsesFolderExistence();
 
         // Apply filters
-        const filtersApplied = await handleFilters(page, log, filterConfig);
-        if (filtersApplied) {
-            log.info('Filters applied successfully');
-        } else {
-            log.warning('Could not apply all filters');
-        }
+        // const filtersApplied = await handleFilters(page, log, filterConfig);
+        // if (filtersApplied) {
+        //     log.info('Filters applied successfully');
+        // } else {
+        //     log.warning('Could not apply all filters');
+        // }
 
         // Используем выделенную функцию для прокрутки страницы и сбора данных
         await scrollAndCollectData(page, paginationService, log);
