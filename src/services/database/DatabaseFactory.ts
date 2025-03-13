@@ -1,9 +1,18 @@
 import { IDatabase } from '@src/services/database/types.js';
 import type { DatabaseConfig } from '@src/services/database/types.js';
+import { PrismaDatabase } from './implementations/PrismaDatabase.js';
 import { SQLiteDatabase } from './implementations/SQLiteDatabase.js';
-import { PostgresDatabase } from './implementations/PostgresDatabase.js';
 
-export type DatabaseType = 'sqlite' | 'postgres';
+// Import Env conditionally to allow tests to mock it
+let Env: any;
+try {
+  Env = require('@lib/Env.js').Env;
+} catch (error) {
+  // In test environments, Env might be mocked
+  Env = {};
+}
+
+export type DatabaseType = 'sqlite' | 'mysql' | 'postgres' | 'prisma';
 
 /**
  * Factory class for creating and managing database instances.
@@ -26,7 +35,7 @@ export class DatabaseFactory {
      * Creates or retrieves a database instance based on the specified type and configuration.
      * Implements connection pooling by reusing existing database connections.
      * 
-     * @param type - The type of database to create ('sqlite' or 'postgres')
+     * @param type - The type of database to create (currently only 'prisma')
      * @param config - Database configuration parameters
      * @returns A Promise resolving to an IDatabase instance
      * @throws Error if the database type is unsupported or if connection fails
@@ -43,13 +52,11 @@ export class DatabaseFactory {
         
         try {
             switch (type) {
-                case 'sqlite':
-                    this.validateSQLiteConfig(config);
-                    database = new SQLiteDatabase(config);
+                case 'prisma':
+                    database = new PrismaDatabase(config);
                     break;
-                case 'postgres':
-                    this.validatePostgresConfig(config);
-                    database = new PostgresDatabase(config);
+                case 'sqlite':
+                    database = new SQLiteDatabase(config);
                     break;
                 default:
                     throw new Error(`Unsupported database type: ${type}`);
@@ -84,28 +91,20 @@ export class DatabaseFactory {
     }
 
     private getDatabaseKey(type: DatabaseType, config: DatabaseConfig): string {
+        // Use the connection string from config if available, otherwise fall back to environment
+        const connectionString = config.connectionString;
+        
         switch (type) {
             case 'sqlite':
-                return `sqlite:${config.filename}`;
+                return `sqlite:${connectionString || Env.DATABASE_SQLITE_URL}`;
+            case 'mysql':
+                return `mysql:${connectionString || Env.DATABASE_MYSQL_URL}`;
             case 'postgres':
-                return `postgres:${config.host}:${config.port}:${config.database}`;
+                return `postgres:${connectionString || Env.DATABASE_POSTGRES_URL}`;
+            case 'prisma':
+                return `prisma:${connectionString}`;
             default:
                 throw new Error(`Unsupported database type: ${type}`);
-        }
-    }
-
-    private validateSQLiteConfig(config: DatabaseConfig): void {
-        if (!config.filename) {
-            throw new Error('SQLite configuration must include a filename');
-        }
-    }
-
-    private validatePostgresConfig(config: DatabaseConfig): void {
-        const requiredFields = ['host', 'port', 'database', 'username'] as const;
-        const missingFields = requiredFields.filter(field => !config[field]);
-        
-        if (missingFields.length > 0) {
-            throw new Error(`PostgreSQL configuration missing required fields: ${missingFields.join(', ')}`);
         }
     }
 }
