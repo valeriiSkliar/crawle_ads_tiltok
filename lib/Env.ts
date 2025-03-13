@@ -23,11 +23,13 @@ export const Env = createEnv({
     OPENAI_API_KEY: z.string().optional(),
     GEMINI_API_KEY: z.string().optional(),
     SAD_CAPTCHA_API_KEY: z.string(),
-    
+    // Database URLs
+    DATABASE_POSTGRES_URL: z.string().min(1),
+    DATABASE_SQLITE_URL: z.string().min(1),
+    DATABASE_MYSQL_URL: z.string().min(1),    
     // TikTok Credentials
     TIKTOK_EMAIL: z.string(),
     TIKTOK_PASSWORD: z.string(),
-    
     // Crawler Settings
     CRAWLER_MAX_WAIT_TIME: z.string().transform(val => parseInt(val, 10)),
     CRAWLER_CAPTCHA_TIMEOUT: z.string().transform(val => parseInt(val, 10)),
@@ -69,10 +71,14 @@ export const Env = createEnv({
     GEMINI_API_KEY: process.env.GEMINI_API_KEY,
     SAD_CAPTCHA_API_KEY: process.env.SAD_CAPTCHA_API_KEY,
     
+    // Database URLs
+    DATABASE_POSTGRES_URL: process.env.DATABASE_POSTGRES_URL,
+    DATABASE_SQLITE_URL: process.env.DATABASE_SQLITE_URL,
+    DATABASE_MYSQL_URL: process.env.DATABASE_MYSQL_URL,
+    
     // TikTok Credentials
     TIKTOK_EMAIL: process.env.TIKTOK_EMAIL,
     TIKTOK_PASSWORD: process.env.TIKTOK_PASSWORD,
-    
     // Crawler Settings
     CRAWLER_MAX_WAIT_TIME: process.env.CRAWLER_MAX_WAIT_TIME,
     CRAWLER_CAPTCHA_TIMEOUT: process.env.CRAWLER_CAPTCHA_TIMEOUT,

@@ -4,9 +4,11 @@ import { PrismaDatabase } from './implementations/PrismaDatabase.js';
 import { SQLiteDatabase } from './implementations/SQLiteDatabase.js';
 
 // Import Env conditionally to allow tests to mock it
-let Env: any;
+let Env: unknown;
 try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   Env = require('@lib/Env.js').Env;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 } catch (error) {
   // In test environments, Env might be mocked
   Env = {};

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi, beforeAll } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { DatabaseFactory, DatabaseType } from '../DatabaseFactory.js';
 import { PrismaDatabase } from '../implementations/PrismaDatabase.js';
 import type { DatabaseConfig, IDatabase } from '../types.js';

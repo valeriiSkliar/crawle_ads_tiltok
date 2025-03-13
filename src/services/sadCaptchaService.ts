@@ -1,8 +1,8 @@
-import { ENV } from '@lib/EnvLoader.js';
 import axios from 'axios';
 import { Log } from 'crawlee';
 import { Page } from 'playwright';
 import * as fs from 'fs';
+import { Env } from '@lib/Env.js';
 
 interface SadCaptchaResponse {
     pointOneProportionX: number;
@@ -93,7 +93,7 @@ export class SadCaptchaService {
                 { imageB64: imageBase64 },
                 {
                     params: {
-                        licenseKey: ENV.SAD_CAPTCHA_API_KEY
+                        licenseKey: Env.SAD_CAPTCHA_API_KEY
                     }
                 }
             );

@@ -1,0 +1,56 @@
+// This is your Prisma schema file
+// Learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./data/database.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Ad {
+  id             String    @id
+  countryCode    String
+  creativeId     String
+  advertiserId   String
+  advertiserName String
+  metadata       Json
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  videoInfo      VideoInfo? @relation(fields: [videoInfoId], references: [vid])
+  videoInfoId    String?
+
+  @@index([creativeId])
+  @@index([advertiserId])
+  @@map("ads")
+}
+
+model VideoInfo {
+  vid      String    @id
+  duration Int
+  cover    String
+  width    Int
+  height   Int
+  ads      Ad[]
+  videoUrl VideoUrl?
+
+  @@map("video_info")
+}
+
+model VideoUrl {
+  id        String    @id @default(cuid())
+  p720      String
+  videoInfo VideoInfo @relation(fields: [videoInfoId], references: [vid])
+  videoInfoId String  @unique
+
+  @@map("video_urls")
+}
+
+model ProcessedItem {
+  itemKey   String    @id
+  createdAt DateTime  @default(now())
+
+  @@map("processed_items")
+}

@@ -10,11 +10,14 @@ import type { Prisma, Ad, VideoInfo, VideoUrl } from '@prisma/client';
 export class PrismaDatabase implements IDatabase {
     constructor(config: DatabaseConfig) {
         // Prisma uses DATABASE_URL from environment
-        if (!config.connectionString) {
+        if (!config.connectionString && !process.env.DATABASE_URL) {
             throw new Error('DATABASE_URL environment variable is required. Please provide a valid connection string in the config.');
         }
-        // Set the connection string for Prisma
-        process.env.DATABASE_URL = config.connectionString;
+        
+        // Set the connection string for Prisma if provided in config
+        if (config.connectionString) {
+            process.env.DATABASE_URL = config.connectionString;
+        }
     }
 
     async connect(): Promise<void> {

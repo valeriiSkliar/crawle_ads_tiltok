@@ -1,7 +1,14 @@
-
 // Load environment variables first
 import dotenv from 'dotenv';
 dotenv.config();
+
+// Set DATABASE_URL for Prisma if not set
+// This must happen before importing any modules that use Prisma
+// import { Env } from '@lib/Env.js';
+// if (!process.env.DATABASE_URL && Env.DATABASE_SQLITE_URL) {
+//     process.env.DATABASE_URL = Env.DATABASE_SQLITE_URL;
+//     console.log('Set DATABASE_URL to:', Env.DATABASE_SQLITE_URL);
+// }
 
 // For more information, see https://crawlee.dev/
 import { PlaywrightCrawler } from 'crawlee';
@@ -26,6 +33,16 @@ const crawler = new PlaywrightCrawler({
     // Remove the maxRequestsPerCrawl limit to allow the crawler to run continuously
     // maxRequestsPerCrawl: 20,
     maxRequestRetries: 1, // Reduce retries to prevent excessive restarts
+    launchContext: {
+        launchOptions: {
+            args: ['--window-size=1920,1080'],
+            viewport: { width: 1920, height: 1080 }
+        }
+    }
 });
+
+
+// log.info('Starting crawler run...');
+// log.info('env', Env);
 
 await crawler.run(startUrls);
