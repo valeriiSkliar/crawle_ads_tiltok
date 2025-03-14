@@ -1,8 +1,11 @@
+import { Log } from "crawlee";
 import { Page } from "playwright";
 
 // Функция для проверки, залогинены ли мы уже
-export const isLoggedIn = async (page: Page): Promise<boolean> => {
+export const isLoggedIn = async (page: Page, log: Log): Promise<boolean> => {
+    await page.waitForTimeout(5000); 
     // Проверяем наличие элементов, которые видны только после входа
+    log.info('Checking if logged in...');
     const loggedInSelectors = [
         'div[data-testid="cc_header_userInfo"]',
         '.UserDropDown_trigger__Ian3g',
@@ -15,8 +18,9 @@ export const isLoggedIn = async (page: Page): Promise<boolean> => {
     ];
     
     for (const selector of loggedInSelectors) {
-        const isVisible = await page.isVisible(selector).catch(() => false);
+        const isVisible = await page.isVisible(selector, { timeout: 2000 }).catch(() => false);
         if (isVisible) {
+            log.info('Logged in successfully');
             return true;
         }
     }

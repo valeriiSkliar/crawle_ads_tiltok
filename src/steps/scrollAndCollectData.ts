@@ -10,13 +10,13 @@ import { PaginationService } from "../services/paginationService.js";
  * @param page - экземпляр страницы Playwright
  * @param paginationService - сервис для работы с пагинацией
  * @param log - инстанс логгера
- * @param delayBetweenScrolls - базовая задержка между прокрутками в мс (по умолчанию 5000)
+ * @param delayBetweenScrolls - базовая задержка между прокрутками в мс (по умолчанию 2500)
  */
 export const scrollAndCollectData = async (
     page: Page,
     paginationService: PaginationService,
     log: Log,
-    delayBetweenScrolls: number = 5000
+    delayBetweenScrolls: number = 2500
 ) => {
     const requiredScrolls = paginationService.getRequiredScrolls();
     log.info('Начинаем процесс прокрутки страницы и сбора данных...', {
@@ -35,7 +35,7 @@ export const scrollAndCollectData = async (
                 randomBetween(100, 200), // minStep
                 randomBetween(300, 400), // maxStep
                 randomBetween(600, 1000), // minDelay
-                randomBetween(1500, 2500), // maxDelay
+                randomBetween(500, 1500), // maxDelay
                 randomBetween(500, 700)  // initialDelay
             );            
 

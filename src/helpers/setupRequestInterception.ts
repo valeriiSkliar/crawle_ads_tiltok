@@ -5,6 +5,7 @@ import { TikTokApiResponse, TikTokAdMaterial } from '../types/api.js';
 import { Log } from 'crawlee';
 import { createDatabase } from '@src/services/database/factory.js';
 import { Env } from '@lib/Env.js';
+import { RequestCaptureService } from '../services/requestCapture.js';
 
 interface RequestInterceptionOptions {
     /**
@@ -64,14 +65,19 @@ export const setupRequestInterception = async (
     options: RequestInterceptionOptions = {}
 ) => {
     const { onResponse, log } = options;
+    const requestCapture = new RequestCaptureService(log);
     // Use DATABASE_SQLITE_URL from environment for Prisma
     const db = await createDatabase('prisma', {
         connectionString: Env.DATABASE_SQLITE_URL,
     });
     await db.connect();
 
-    await page.route('**/creative_radar_api/v1/top_ads/v2/list**', async (route) => {
+    await page.route('**/creative_radar_api/v1/top_ads/v2/list**', async (route, request) => {
         try {
+            // Capture request details for future use
+            await requestCapture.captureRequest(request);
+
+            log?.info('API request headers:', { headers: request.headers() });
             // Continue the request and get response
             const response = await route.fetch();
             const responseBody = await response.json() as TikTokApiResponse;
